@@ -1,19 +1,40 @@
-import {MintCloseAuthorityLayout, mintTo} from "@solana/spl-token";
+import { MintCloseAuthorityLayout, mintTo, getMint, getAccount, createAssociatedTokenAccount, createMint } from "@solana/spl-token";
 require('dotenv').config();
 import { getExplorerLink, getKeypairFromEnvironment } from "@solana-developers/helpers";
 import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 
 const connection = new Connection(clusterApiUrl("devnet"));
-const MINOR_UNITS_PER_MAJOR_UNITS = Math.pow(10,2);
+const MINOR_UNITS_PER_MAJOR_UNITS = Math.pow(10, 2);
 
 const user = getKeypairFromEnvironment("SECRET_KEY");
 
-const tokenMintAccount = new PublicKey("Gm8jeTm3qDncpdc5AvVxmv5LXwSLDfzD34CyozPPtvrg");
+const tokenMintAccount = new PublicKey("toks9nV77o8tjKFyko5Az1AYtyrE1uYFiMUjJgBdeD4");
+const recipientAssociatedTokenAccount = new PublicKey("E2pyeAscK8YwNgMtB1ofqfoe4SRLRqEUa5sb77ovEGip");
 
-const recipientAssociatedTokenAccount = new PublicKey("DQSZvbW8hktCeqa96mHTeAAGQHLveMm5gwRJ2TEmymT3");
+async function main() {
+  try {
+    // Verify that the token mint account is a valid mint
+    const mintInfo = await getMint(connection, tokenMintAccount);
+    console.log('Mint info:', mintInfo);
 
-const transactionSignature = await mintTo(connection,user,tokenMintAccount, recipientAssociatedTokenAccount, user, 10*MINOR_UNITS_PER_MAJOR_UNITS);
+    // Verify that the recipient associated token account is valid
+    const accountInfo = await getAccount(connection, recipientAssociatedTokenAccount);
+    console.log('Account info:', accountInfo);
 
-const link = getExplorerLink("transaction", transactionSignature, "devnet");
+    const transactionSignature = await mintTo(
+      connection,
+      user,
+      tokenMintAccount,
+      recipientAssociatedTokenAccount,
+      user,
+      10 * MINOR_UNITS_PER_MAJOR_UNITS
+    );
 
-console.log(`✅ Success! Mint Token Transaction: ${link}`);
+    const link = getExplorerLink("transaction", transactionSignature, "devnet");
+    console.log(`✅ Success! Mint Token Transaction: ${link}`);
+  } catch (error) {
+    console.error(`❌ Error: ${error}`);
+  }
+}
+
+main();
